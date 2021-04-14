@@ -22,7 +22,7 @@ Another example use case: we want to analyze the meeting contents so we can tag 
 
 The goal for this role is to build out the NLP capabilities in processing text documents to accurately and succinctly capture relevant information on key words.
 
-[Code for San Jose Project List](https://docs.google.com/spreadsheets/d/15nBWVyG4nFTOFKP4u1tOgFxH9xwAF8uaZG47ABm7HQ4/edit#gid=545916388) Line 3 and 4. 
+[Code for San Jose Project List](https://docs.google.com/spreadsheets/d/15nBWVyG4nFTOFKP4u1tOgFxH9xwAF8uaZG47ABm7HQ4/edit#gid=545916388)- Line 3 and 4. 
 
 ## Features
 
