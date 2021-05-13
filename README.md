@@ -24,7 +24,7 @@ The goal is to build out the NLP capabilities in processing text documents to ac
 
 ## Data
 
-San Jose City Council Meeting Minutes 加州圣荷塞市政厅会议记录 [Legistar](https://sanjose.legistar.com/Calendar.aspx)
+San Jose City Council Meeting Minutes 加州圣荷塞市政厅会议记录 Source: [Legistar](https://sanjose.legistar.com/Calendar.aspx)
 
 ## Features
 
