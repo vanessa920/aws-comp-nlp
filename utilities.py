@@ -6,7 +6,7 @@ from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import matplotlib.pyplot as plt
 import pickle
 import sys
-import regex as re
+import re
 import pandas as pd
 import math
 import boto3
