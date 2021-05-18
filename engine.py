@@ -9,7 +9,7 @@ import datetime
 import gensim
 import time
 
-from pathlib import Path
+from pathlib import Path,PosixPath,WindowsPath
 
 from gensim import corpora, models, similarities
 from utilities import *
