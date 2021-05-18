@@ -1,11 +1,16 @@
-# aws-comp-nlp
+# Meeting Stickers Demo
 
 AWS Hackathon Online 2021
 Organizer: Heart of Machine
 
 ## Project Name
 
-AI Meeting Notes
+AI Meeting Stickers
+
+## Project Team
+
++ Vanessa Hu - https://www.linkedin.com/in/vanessahu/
++ Sheng Xiong Ding (Roland) - https://www.linkedin.com/in/roland-ding-403a5b1a/
 
 ## Background
 
