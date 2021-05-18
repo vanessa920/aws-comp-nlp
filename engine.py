@@ -338,7 +338,7 @@ def testinit(filename = 'city_sanjose_data.csv'):
 def saveEngine(filename, obj_engine):
     start = time.time()
     
-    with Path(filename).open('rb') as outfile:
+    with PosixPath(filename).open('rb') as outfile:
         pickle.dump(obj_engine,outfile)
         
     end = time.time()
@@ -349,7 +349,7 @@ def saveEngine(filename, obj_engine):
 def loadEngine(filename):
     start = time.time()
 
-    with Path(filename).open('rb') as infile:
+    with PosixPath(filename).open('rb') as infile:
         obj_engine = pickle.load(infile)
         
     end = time.time()
