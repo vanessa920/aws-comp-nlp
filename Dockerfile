@@ -5,17 +5,17 @@ USER root
 
 WORKDIR /app
 
-ADD __init__.py
-ADD engine.py
-ADD FileControl.py
-ADD nlp_engine.pkl
-ADD README.md
-ADD requirements.txt
-ADD UI.py
-ADD UI-control.js
-ADD UI-style.js
-ADD utilities.py
-ADD Dockerfile
+ADD __init__.py /app
+ADD engine.py /app
+ADD FileControl.py /app
+ADD nlp_engine.pkl /app
+ADD README.md /app
+ADD requirements.txt /app
+ADD UI.py /app
+ADD UI-control.js /app
+ADD UI-style.js /app
+ADD utilities.py /app
+ADD Dockerfile /app
 ADD city_SanJose_Minutes.csv /app
 
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
