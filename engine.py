@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import sys
 import re
 import spacy
@@ -6,9 +7,11 @@ import string
 import pickle
 import datetime
 import gensim
+import time
 
 from gensim import corpora, models, similarities
-from client import userInput
+from utilities import *
+
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer, ENGLISH_STOP_WORDS
 from sklearn.decomposition import LatentDirichletAllocation
 
@@ -21,9 +24,26 @@ class engine:
         + purge, for a dictionary of regex pattern to identify in string and purge,
         + exclusion, for a string contains all excluding punctuations and stop words,
     attributes:
-    
+        + comonent_n, an integer for LatentDirichletAllocation initial setup component number attributes
+        + parser, spacy parser with en_core_web_sm as default library
+        + purge, a list of text patterns for natural language purge purpose
+        + exclusion, a string of characters and stopwords from spacy for exclusion purposes
+        + TFIDF_core, a TFIDF object with preset parameters, is trained after data load and can be used to transform natural language text.
+        + LDA_core, a LatentDirichletAllocation object with preset parameters, is trained after data load and can be used to transform natural language text. 
+        + spacy_list, a complete list of sentence lists after clean up the imported data, created after load data
+        + word_matrix, created after load data
+        + chronicle, created after load data
+        + vocab, a complete list of word vocabulary from TFIDF_core, created after load data
+        + content_df, created after load data
+        + word2topic_df, created after load data
+        + w2v, word to vector module trained based on the cleaned out the spacy list. created after load data
     methods:
-    
+        + loadCSV
+        + clean_text
+        + spacy_tokenizer
+        + LDA_init
+        + getSimilar
+        + searchKeywords
     '''
 
     SPACY_PARSER = spacy.load('en_core_web_sm')
@@ -49,7 +69,6 @@ class engine:
         self.exclusion  = exclusion
         self.TFIDF_core = TfidfVectorizer(min_df=0.0085, max_df=0.9, stop_words=ENGLISH_STOP_WORDS)
         self.LDA_core   = LatentDirichletAllocation(n_components=n, random_state=0)
-        self.status     = 'OFF'
     
     def loadCSV(self,fileDIR):
         '''
@@ -58,39 +77,47 @@ class engine:
         
         '''
         statusUpdate('--loading CSV--')
-        df = pd.read_csv(fileDIR, index_col = 0)
+        self.df = pd.read_csv(fileDIR, index_col = 0)
         
         statusUpdate('--converting dataframe--')
-        df['date'] = pd.to_datetime(df['date'])
-        art_df = pd.DataFrame(df.groupby('artID').sum('content')['subID'])
-        art_df = art_df.loc[art_df.subID>3]
+        self.df['date'] = pd.to_datetime(self.df['date'])
+        art_s = self.df.groupby('filename').count()['subID'].rename('subID_count')
+        art_s = art_s.loc[art_s>3]
         
-        df = df.merge(art_df, on='artID', how = 'inner')
+        self.df = self.df.merge(art_s, on='filename', how = 'inner')
         
         statusUpdate('--created object dataframe df_subID--')
-        self.df_subID = df[df['subID_x']!=0].reset_index()
+        self.df_subID = self.df[self.df['subID_count']!=0].reset_index()
         
         statusUpdate('--clean and spacy transforming dataframe content I--')
-        text = self.df_subID['content']
-        text = text.apply(lambda x: self.clean_text(x))
-        text = text.apply(lambda x: self.spacy_tokenizer(x))
+        self.text = self.df_subID['content']
+        self.text = self.text.apply(lambda x: self.clean_text(x))
+        self.text = self.text.apply(lambda x: ' '.join(self.spacy_tokenizer(x)))
         
         statusUpdate('--clean and spacy transforming dataframe content II--')
-        clean_list = [self.clean_text(i) for i in text]
-        self.spacy_list = [self.spacy_tokenizer_2(i) for i in clean_list]
+        clean_list = [self.clean_text(i) for i in self.text]
+        self.spacy_list = [self.spacy_tokenizer(i) for i in clean_list]
         
         statusUpdate('--get word matrix and vocabulary--')
-        self.word_matrix = self.TFIDF_core.fit_transform(text)
+        self.word_matrix = self.TFIDF_core.fit_transform(self.text)
         self.vocab = self.TFIDF_core.get_feature_names()
+        #print(len(self.vocab))
         
         statusUpdate('--initializing LDA core--')
         self.content_df, self.word2topic_df = self.LDA_init()
-        
+    
         statusUpdate('--initializing word to vector core--')
         self.w2v = gensim.models.Word2Vec(self.spacy_list, size=100, window=5, min_count=1, workers=2, sg=1)
-        
-        self.status = 'ON'
-        
+        self.chronicle = self.df['date'].unique()
+    
+    def getText(self,filename = None):
+        if filename is None:
+            text = ''.join(self.df['content'].tolist())
+        else:
+            text = ''.join(self.df[self.df['filename']==filename]['content'].tolist())
+        text.replace('\n',' ')
+        return text
+    
     def clean_text(self,text):
         '''
         '''
@@ -108,16 +135,6 @@ class engine:
     
     # Creating our tokenizer function
     def spacy_tokenizer(self,text):
-        # Creating our token object, which is used to create documents with linguistic annotations.
-        mytokens = self.parser(text)
-        # Lemmatizing each token and converting each token into lowercase
-        mytokens = [ word.lemma_.lower().strip() if word.lemma_ != "-PRON-" else word.lower_ for word in mytokens ]
-        # Removing stop words
-        mytokens = [ word for word in mytokens if word not in self.exclusion ]
-        # return preprocessed list of tokens
-        return ' '.join(mytokens)
-
-    def spacy_tokenizer_2(self,text):
         # Creating our token object, which is used to create documents with linguistic annotations.
         mytokens = self.parser(text)
         # Lemmatizing each token and converting each token into lowercase
@@ -143,9 +160,8 @@ class engine:
         return content_df, word2topic_df
 
     def getSimilar(self,keywords,topn = 20):
-        if self.status != 'ON':
-            print('need to load source file to initialize.')
-            return
+        if self.content_df is None:
+            statusUpdate('--engine is not initialized--')
         try:
             result = [w[0] for w in self.w2v.wv.most_similar(keywords,topn = topn)]
         except Exception as err:
@@ -159,69 +175,197 @@ class engine:
                 print(err)
                 print("Try Another Word")
         return result
-    '''
-    def saveEngine(self,filename):
-        statusUpdate('--saving engine--')
-        with open(filename,'wb') as outputfile:
-            pickle.dump(self,outputfile,pickle.HIGHEST_PROTOCOL)
-        return True
+    
+    def searchKeywords(self,keyWords,timeA,timeB,hasDollar = False):
+        # preprocess all the input variables
+        if type(keyWords) == type(' '):
+            keyWords = keyWords.split(',')
+        elif type(keyWords)==type([]):
+            pass
+        else:
+            pass
         
-    def loadEngine(self,filename):
-        statusUpdate('--load engine--')
+        startdate = timeA
+        enddate = timeB
+        
+        # generate the similar keywords list
+        '''
+        keyword_list=[]
+        for i in range(20):
+            try:
+               keyword_list.append(self.w2v.wv.most_similar(keywords ,topn=20)[i][0])
+            except:
+                pass
+        '''
+        
+        # check and remove excessive error words for further processing.
+        pattern_err_word = re.compile(r"word '(.*)' not in vocabulary")
+        keyword_list = None
+        
+        while(keyword_list is None and keyWords != []):
+            try:
+                keyword_list = [k for (k,v) in self.w2v.wv.most_similar(keyWords ,topn=20)]+keyWords
+            except KeyError as err:
+                err_word = re.search(pattern_err_word,str(err)).group(1)
+                keyWords.remove(err_word)
+
+            finally:
+                if keyWords == []:
+                    return None
+
+        # generate the topic list as per keyword in keyword list
+        topic_list =[]
+        for k in keyword_list:
+            try:
+                topic_list.append(self.word2topic_df.loc[k].idxmax())
+            except:
+                pass
+                
+        time_frame = (self.content_df['date'] > startdate) & (self.content_df['date'] < enddate)
+        sub_df = self.content_df[time_frame]
+        if hasDollar == True:
+            sub_df = sub_df[sub_df['hasDollar']==True]
+
+        notes = pd.DataFrame()
+
+        for j in range(len(list(set(topic_list)))): # number of unique topics
+
+            n = 0
+            for i in range(len(topic_list)):
+
+                if list(set(topic_list))[j] == topic_list[i]:
+                    n = n+3  # Number of notes can be controled to show 
+
+            notes = pd.concat([notes, sub_df.sort_values(list(set(topic_list))[j], ascending = False)[0:n]])
+            
+        return notes, topic_list, keyword_list
+    
+    def updateContent(self,filename):
+        pass
+        
+    def removeContent(self,filename):
+        pass
+        
+    def viewContent(self,filename):
+        return self.df[self.df['filename']==filename]
+    
+
+    def addContent(self,filename):
+        new_df = pdf2df(filename)
+        
+        statusUpdate('--converting dataframe--')
+        new_df['date'] = pd.to_datetime(new_df['date'])
+        #print(new_df.head())
+        #print(new_df.count()[])
+        
+        art_i = new_df.count()['date']
+        new_df['subID_count'] = art_i
+        
+        self.df = self.df.append(new_df,ignore_index = True)
+        
+        statusUpdate('--created object dataframe df_subID--')
+        newSub_df = new_df[new_df['subID_count']!=0].reset_index()
+        self.df_subID = self.df_subID.append(newSub_df,ignore_index = True)
+        
+        statusUpdate('--clean and spacy transforming dataframe content I--')
+        text = newSub_df['content']
+        text = text.apply(lambda x: self.clean_text(x))
+        self.text.append(text.apply(lambda x: ' '.join(self.spacy_tokenizer(x))),ignore_index = True)
+        
+        statusUpdate('--clean and spacy transforming dataframe content II--')
+        clean_list = [self.clean_text(i) for i in text]
+        self.spacy_list += [self.spacy_tokenizer(i) for i in clean_list]
+        self.chronicle = self.df['date'].unique()
+        
+        statusUpdate('--retrain engine--')
+        if self.retrain():
+            statusUpdate('--engine retrained--')
+        else:
+            statusUpdate('--engine retrain failed--')
+        
+        
+
+# get number of pages from the full content base
+    def getPageCount(self):
+        pageNo_pattern = re.compile(r'Page\s+(\d+)\s')
+        self.df['pageNo'] = self.df['content'].apply(lambda x: re.search(pageNo_pattern,x) is not None)
+        subdf = self.df[self.df['pageNo']].copy()
+        subdf['pageNo'] = subdf['content'].apply(lambda x: re.search(pageNo_pattern,x).group(1)).astype('int32')
+        return subdf.groupby('filename')['pageNo'].max().sum()
+    
+    def getWordCount(self):
+        text = [c['content'] for i,c in self.df.iterrows()]
+        return sum([len(s.split(' ')) for s in text])
+    
+    def getOriginal(self,filename):
+        file_df = self.df[self.df['filename']==filename].copy()
+        text = ''.join([c['content'] for i,c in file_df.iterrows()])
+        return text
+    
+    def retrain(self):
         try:
-            with open(filename,'rb') as inputfile:
-                self = pickle.load(inputfile)
-            return True
+            print('engine retrain started')
+            self.text.reset_index()
+            self.word_matrix = self.TFIDF_core.fit_transform(self.text)
+            self.vocab = self.TFIDF_core.get_feature_names()
+            print('TFIDF core training complete')
+            self.w2v = gensim.models.Word2Vec(self.spacy_list, size=100, window=5, min_count=1, workers=2, sg=1)
+            print('word to vector core training complete')
         except Exception as err:
             print(err)
-            statusUpdate('--fail to load engine--')
             return False
-    '''
+        
+        try:
+            self.content_df, self.word2topic_df = self.LDA_init()
+            print('LDA core training complete')
+        except Exception as err:
+            print(err)
+            return False
+        return True
+
     
-    def wordWeight(self,):
-        print('hello')
+def testinit(filename = 'city_sanjose_data.csv'):
+    start = time.time()
+    Engine = engine()
+    Engine.loadCSV(filename)
+    end = time.time()
     
+    print(f'takes {start - end} second to train')
+    return Engine
+
+def saveEngine(filename, obj_engine):
+    start = time.time()
     
-def statusUpdate(status,end = '\r'):
-    sys.stdout.write("\033[K")
-    print(status,end=end)
+    with open(filename,'wb') as outfile:
+        pickle.dump(obj_engine,outfile,pickle.HIGHEST_PROTOCOL)
+        
+    end = time.time()
+    print(f'takes {start - end} second to save')
     
+    return filename
+
+def loadEngine(filename):
+    start = time.time()
+
+    with open(filename,'rb') as infile:
+        obj_engine = pickle.load(infile)
+        
+    end = time.time()
+    print(f'takes {start - end} second to load')
+    return obj_engine
 
 def test():
-    # User Inputs
-    # keywords,date,user_logics = userInput()
+    statusUpdate('--test start--')
+    enginefilename = 'nlp_engine.pkl'
 
-    # print(keywords,date,user_logics)
-    keywords = ['covid','action']
+    init_engine = testinit()
     
-    engineName1 = 'nlp_engine_1.pkl'
-    engineName3 = 'nlp_engine_3.pkl'
-    '''
-    Engine_1 = engine()
-    Engine_1.loadCSV('city_SanJose_Minutes.csv')
-    similar = Engine_1.getSimilar(keywords)
-    #print(similar)
+    saved_name = savepkl(enginefilename,init_engine)
+    copy_engine = loadpkl(saved_name)
     
-    Engine_1.saveEngine(engineName1)
-    
-    Engine_2 = engine(n=15)
-    Engine_2.loadEngine(engineName1)
-    print(Engine_2.component_n)
-    #print(Engine_2.word2topic_df)
-    
-    Engine_3 = engine()
-    Engine_3.loadCSV('city_SanJose_Minutes.csv')
-    similar = Engine_1.getSimilar(keywords)
-    print(similar)
-    
-    with open(engineName3,'wb') as outfile:
-        pickle.dump(Engine_3,outfile,pickle.HIGHEST_PROTOCOL)
-    '''
-    with open(engineName3,'rb') as infile:
-        Engine_4 = pickle.load(infile)
-        
-    print(Engine_4.word2topic_df)
-    
+    statusUpdate('--test end--')
+    statusUpdate(f'--test saved file name: {saved_name}--')
+
 if __name__ == '__main__':
     # User Inputs
     test()
