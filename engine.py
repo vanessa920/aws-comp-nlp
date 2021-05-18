@@ -9,6 +9,8 @@ import datetime
 import gensim
 import time
 
+from pathlib import Path
+
 from gensim import corpora, models, similarities
 from utilities import *
 
@@ -347,7 +349,7 @@ def saveEngine(filename, obj_engine):
 def loadEngine(filename):
     start = time.time()
 
-    with open(filename,'rb') as infile:
+    with open(Path(filename),'rb') as infile:
         obj_engine = pickle.load(infile)
         
     end = time.time()
