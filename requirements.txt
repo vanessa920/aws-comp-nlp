@@ -8,7 +8,7 @@ matplotlib==3.3.2
 pandas==1.1.2
 altair==4.1.0
 gensim==3.8.3
-en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.3.1/en_core_web_sm-2.3.1-py3-none-any.whl
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.3.1/en_core_web_sm-2.3.1.tar.gz
 spacy==2.3.2
 Pillow==8.2.0
 scikit_learn==0.24.2
