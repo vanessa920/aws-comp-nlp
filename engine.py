@@ -339,8 +339,8 @@ def testinit(filename = 'city_sanjose_data.csv'):
 def saveEngine(filename, obj_engine):
     
     start = time.time()
-    file_folder = PosixPath(os.getcwd())
-    file_to_open = file_folder / filename
+    fulldir = PureWindowsPath(os.getcwd()+'\\'+filename)
+    file_to_open = Path(fulldir)
     pickle.dump(obj_engine,file_to_open.open('wb'))
         
     end = time.time()
@@ -350,8 +350,8 @@ def saveEngine(filename, obj_engine):
 
 def loadEngine(filename):
     start = time.time()
-    file_folder = PosixPath(os.getcwd())
-    file_to_open = file_folder / filename
+    fulldir = PureWindowsPath(os.getcwd()+'\\'+filename)
+    file_to_open = Path(fulldir)
     obj_engine = pickle.load(file_to_open.open('rb'))
         
     end = time.time()
