@@ -1,7 +1,6 @@
 botocore==1.17.44
 numpy==1.19.1
 boto3==1.14.44
-streamlit==0.69.2
 wordcloud==1.8.0
 tika==1.24
 matplotlib==3.3.2
@@ -12,3 +11,4 @@ en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_
 spacy==2.3.2
 Pillow==8.2.0
 scikit_learn==0.24.2
+streamlit==0.69.2
