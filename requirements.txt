@@ -11,4 +11,4 @@ en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_
 spacy==2.3.2
 Pillow==8.2.0
 scikit_learn==0.24.2
-streamlit==0.69.2
+spacy-streamlit==1.0.0streamlit==0.81.1
