@@ -11,6 +11,7 @@ import time
 import os
 
 from pathlib import Path,PosixPath,WindowsPath,PureWindowsPath,PurePosixPath
+from os.path import join
 
 from gensim import corpora, models, similarities
 from utilities import *
@@ -339,7 +340,7 @@ def testinit(filename = 'city_sanjose_data.csv'):
 def saveEngine(filename, obj_engine):
     
     start = time.time()
-    fulldir = PurePosixPath(os.getcwd()+'/'+filename)
+    fulldir = join(os.getcwd(),filename)
     file_to_open = Path(fulldir)
     pickle.dump(obj_engine,file_to_open.open('wb'))
         
@@ -350,7 +351,7 @@ def saveEngine(filename, obj_engine):
 
 def loadEngine(filename):
     start = time.time()
-    fulldir = PurePosixPath(os.getcwd()+'/'+filename)
+    fulldir = join(os.getcwd(),filename)
     file_to_open = Path(fulldir)
     obj_engine = pickle.load(file_to_open.open('rb'))
         
