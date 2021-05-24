@@ -1,4 +1,7 @@
 etc/
 share/
-*.ipynb
 raw/
+*.json
+*.ipynb
+*.png
+.gitignore
