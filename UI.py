@@ -24,10 +24,10 @@ from engine import engine,loadEngine,saveEngine
 from utilities import *
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from spacy import displacy
-#from .util import load_model, process_text, get_svg, get_html, get_color_styles, LOGO
+from collections import Counter
 
 
-stop_words = ENGLISH_STOP_WORDS.union(word for word in ['City','San','Jose','Council','Report','motion','Item','Council','Councilmember','Title','Service','DISTRICT','Page','Action','Section','Project','File','appointment','approval','Manager','PUBLIC','Minutes','fee','funding','Amend','provided','Agreement','staff','S','services','changes','the City','Amendment to','of San','City of'])
+stop_words = ENGLISH_STOP_WORDS.union(word for word in ['City','The','No','No.','José','Jose','2020','San','Jose','Council','Report','motion','Item','Council','Councilmember','Title','Service','DISTRICT','Page','Action','Section','Project','File','appointment','approval','Manager','PUBLIC','Minutes','fee','funding','Amend','provided','Agreement','staff','S','services','changes','the City','Amendment to','of San','City of','(a)','(b)','Not','(11-0.)'])
 
 NER_ATTRS = ["text", "label_", "start", "end", "start_char", "end_char"]
 TOKEN_ATTRS = ["idx", "text", "lemma_", "pos_", "tag_", "dep_", "head", "morph",
@@ -113,8 +113,24 @@ def view_meeting(obj_engine):
     startdate = npdate2date(min(obj_engine.chronicle))
     enddate = npdate2date(max(obj_engine.chronicle))
     
+    textLS = obj_engine.getText().split()
+    filtered_LS = [w for w in textLS if w not in obj_engine.exclusion and w not in stop_words]
+    counted = Counter(filtered_LS)
+    most_occur = [t for (t,v) in counted.most_common(25)]
+    most_occur_cleaned =[]
+    for w in most_occur:
+        w = w.replace(':','')
+        w = w.replace(',','')
+        w = w.replace('.','')
+        most_occur_cleaned.append(w)
+        
+    
     # setup sidebar
     keywords = st.sidebar.text_input('enter your keywords, seperate with comma')
+    keywords_ls = st.sidebar.multiselect('you also may select from the following keywords',most_occur_cleaned)
+    for w in keywords_ls:
+        keywords+=f',{w.lower()}'
+    print(keywords)
     (date_start,date_end) = st.sidebar.slider('what time frame?:', startdate, enddate, (startdate,enddate),key = ('date_start','date_end'))
     hasDollar = st.sidebar.checkbox('contains dollar values')
     result = obj_engine.searchKeywords(keywords,date_start,date_end,hasDollar)
