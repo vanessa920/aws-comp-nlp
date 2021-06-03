@@ -125,8 +125,8 @@ def view_meeting(obj_engine):
         most_occur_cleaned.append(w)
     
     # setup sidebar
-    keywords = st.sidebar.text_input('enter your keywords, seperate with comma')
-    keywords_ls = st.sidebar.multiselect('you also may select from the following keywords',most_occur_cleaned)
+    keywords = st.sidebar.text_input('Enter Your Keywords(seperate with comma)')
+    keywords_ls = st.sidebar.multiselect('Or Choose the Suggested Keywords',most_occur_cleaned)
     for w in keywords_ls:
         keywords+=f',{w.lower()}'
     print(keywords)
