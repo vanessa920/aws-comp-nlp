@@ -9,3 +9,6 @@ EXTERNAL_DEPENDENCIES = {
         'date': datetime(2021, 5, 14, 12, 26, 19, 672344)
     }
 }
+
+ACCESS_KEY = 'AKIA3ANEUHKZEZRC7BHV'
+SECRET_KEY = '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'

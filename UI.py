@@ -123,7 +123,6 @@ def view_meeting(obj_engine):
         w = w.replace(',','')
         w = w.replace('.','')
         most_occur_cleaned.append(w)
-        
     
     # setup sidebar
     keywords = st.sidebar.text_input('enter your keywords, seperate with comma')
@@ -210,6 +209,7 @@ def view_original(obj_engine):
     
 # Issue, the control for upload was gone?
 def content_control(obj_engine):
+    
     uploaded_file = st.sidebar.file_uploader("Upload your meeting minutes file", type=["PDF"])
     
     if uploaded_file is not None:
@@ -217,22 +217,27 @@ def content_control(obj_engine):
         
         try:
             obj_engine.addContent(uploaded_file)
-        except:
+            # ok apparently in here is where the problem is.
+        except Exception as err:
             st.markdown('Server is busy, please try again later', unsafe_allow_html=True)
-        '''
-        saveEngine(engineName,obj_engine)
-        s3 = boto3.client('s3')
+            st.markdown(str(err))
+        
+        pickle.dump(obj_engine,open(engineName,'wb'),pickle.HIGHEST_PROTOCOL)
+        
+        s3 = boto3.client('s3',
+                         aws_access_key_id=ACCESS_KEY,
+                         aws_secret_access_key=SECRET_KEY)
         s3.upload_file(
             engineName, 'stickers-lambda',engineName,
-            ExtraArgs={'ACL': 'public-read'}
+            ExtraArgs = {'ACL': 'public-read'}
         )
-        '''
+        
         EXTERNAL_DEPENDENCIES[engineName]['date']=datetime.today()
         
         Body_html = f'''**{uploaded_file.name}** uploaded. New AI_core has been updated and uploaded to Cloud'''
     else:
         Body_html = f'''Here you can upload the meeting pdf files and decide to include it in the content pool.'''
-        
+    
     st.markdown(Body_html, unsafe_allow_html=True)
 
 def statSum(obj_engine):
