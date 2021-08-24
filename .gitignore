@@ -1,7 +1,7 @@
 etc/
 share/
-raw/
 *.json
 *.ipynb
 *.png
-.gitignore
+.archive
+env
