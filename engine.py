@@ -342,7 +342,7 @@ def saveEngine(filename, obj_engine):
     file_to_open = Path(fulldir)
     
     with open(file_to_open,'wb') as outfile:
-        pickle.dump(obj_engine,outfile,pickle.HIGHEST_PROTOCOL)
+        pickle.dump(obj_engine,outfile,4)
         
     end = time.time()
     print(f'takes {end-start} second to save')

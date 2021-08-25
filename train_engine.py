@@ -6,6 +6,6 @@ from utilities import *
 test_engine = engine()
 test_engine.loadCSV('city_SanJose_Minutes.csv')
 
-filename = 'test_engine'
+filename = 'nlp_engine.pkl'
 
 saveEngine(filename,test_engine)
