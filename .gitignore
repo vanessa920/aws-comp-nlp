@@ -3,5 +3,4 @@ share/
 *.json
 *.ipynb
 *.png
-.archive
 env
