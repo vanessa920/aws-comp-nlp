@@ -1,4 +1,6 @@
 import streamlit as st
+st.set_page_config(layout="wide")
+
 import numpy as np
 import pandas as pd
 
@@ -34,6 +36,8 @@ TOKEN_ATTRS = ["idx", "text", "lemma_", "pos_", "tag_", "dep_", "head", "morph",
                "is_digit", "is_punct", "like_num", "is_sent_start"]
 # fmt: on
 FOOTER = """<span style="font-size: 0.75em">&hearts; Built with [`spacy-streamlit`](https://github.com/explosion/spacy-streamlit)</span>"""
+global INITIALIZED
+INITIALIZED = False
 
 
 # preload content before the main
@@ -41,10 +45,10 @@ def init():
     # Download external dependencies.
     # for filename in EXTERNAL_DEPENDENCIES.keys():
     #     download_file(filename)
+
     if os.path.exists('nlp_engine.pkl'):
         real_engine = loadEngine('nlp_engine.pkl')
     # Load style
-    st.set_page_config(layout="wide")
     st.markdown('<style>' + open('UI-styles.css').read() + '</style>', unsafe_allow_html=True)
 
     return real_engine
@@ -211,11 +215,11 @@ def view_original(obj_engine):
 
 # Issue, the control for upload was gone?
 def content_control(obj_engine):
+    engineName = 'nlp_engine.pkl'
 
     uploaded_file = st.sidebar.file_uploader("Upload your meeting minutes file", type=["PDF"])
 
     if uploaded_file is not None:
-        engineName = 'nlp_engine.pkl'
 
         try:
             obj_engine.addContent(uploaded_file)
@@ -224,7 +228,7 @@ def content_control(obj_engine):
             st.markdown('Server is busy, please try again later', unsafe_allow_html=True)
             st.markdown(str(err))
 
-        pickle.dump(obj_engine,open(engineName,'wb'),4)
+        saveEngine(engineName,obj_engine)
 
         Body_html = f'''**{uploaded_file.name}** uploaded. New AI_core has been updated.'''
     else:
@@ -243,44 +247,6 @@ def statSum(obj_engine):
         'Dollar Occurances': obj_engine.content_df['hasDollar'].sum()
     }
     return sumDict
-'''
-def download_file(file_path):
-    # Don't download the file twice. (If possible, verify the download using the file length.)
-    if os.path.exists(file_path):
-        if "size" not in EXTERNAL_DEPENDENCIES[file_path]:
-            return
-        elif datetime.fromtimestamp(os.path.getmtime(file_path)) >= EXTERNAL_DEPENDENCIES[file_path]["mdate"]:
-            return
-
-    # These are handles to two visual elements to animate.
-    model_warning, progress_bar = None, None
-    try:
-        model_warning = st.warning("Downloading %s..." % EXTERNAL_DEPENDENCIES[file_path]['name'])
-        progress_bar = st.progress(0)
-        with open(file_path, "wb") as output_file:
-            with urlopen(EXTERNAL_DEPENDENCIES[file_path]["url"]) as response:
-                length = int(response.info()["Content-Length"])
-                counter = 0.0
-                MEGABYTES = 2.0 ** 20.0
-                while True:
-                    data = response.read(8192)
-                    if not data:
-                        break
-                    counter += len(data)
-                    output_file.write(data)
-
-                    # We perform animation by overwriting the elements.
-                    model_warning.warning("Downloading %s... (%6.2f/%6.2f MB)" %
-                        (file_path, counter / MEGABYTES, length / MEGABYTES))
-                    progress_bar.progress(min(counter / length, 1.0))
-
-    # Finally, we remove these visual elements by calling .empty().
-    finally:
-        if model_warning is not None:
-            model_warning.empty()
-        if progress_bar is not None:
-            progress_bar.empty()
-'''
 
 def loadWordCloud(text,man_stop = [],obj = st,width = 500,height = 250,max_words = 50):
     wc = WordCloud(max_font_size=50, max_words=max_words,width = width,height = height,stopwords=man_stop, background_color="white").generate(text)
@@ -322,6 +288,8 @@ def visualize_ner(
         obj.dataframe(df)
 
 if __name__ == '__main__':
-    real_engine = init()
+    if not INITIALIZED:
+        real_engine = init()
+        INITIALIZED = True
     main(real_engine)
     pass
