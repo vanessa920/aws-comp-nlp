@@ -355,7 +355,7 @@ def loadEngine(filename):
     file_to_open = Path(fulldir)
     with open(file_to_open,'rb') as infile:
         obj_engine = pickle.load(infile)
-        
+ 
     end = time.time()
     print(f'takes {end-start} second to load')
     return obj_engine
@@ -365,10 +365,10 @@ def test():
     enginefilename = 'nlp_engine.pkl'
 
     init_engine = testinit()
-    
+
     saved_name = saveEngine(enginefilename,init_engine)
-    copy_engine = loadEngine(saved_name)
-    
+#    copy_engine = loadEngine(saved_name)
+
     statusUpdate('--test end--')
     statusUpdate(f'--test saved file name: {saved_name}--')
 
