@@ -1,7 +1,7 @@
 # Meeting Stickers Demo
 
-1st Place Winner of AWS(China) Online Hackathon 2021: https://mp.weixin.qq.com/s/xaP-lioLWRBVKBjT7OZ-8g
-Organizer: Heart of Machine
+**1st Place Winner** Project of AWS(China) Online Hackathon 2021: https://mp.weixin.qq.com/s/xaP-lioLWRBVKBjT7OZ-8g
+
 
 ## Project Name
 
