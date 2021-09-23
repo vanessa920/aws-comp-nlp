@@ -1,6 +1,6 @@
 # Meeting Stickers Demo
 
-**1st Place Winner** Project of AWS(China) Online Hackathon 2021: https://mp.weixin.qq.com/s/xaP-lioLWRBVKBjT7OZ-8g
+**1st Place Winner** Project of AWS(China) Online Hackathon 2021: https://new.qq.com/omn/20210830/20210830A05BSB00.html
 
 
 ## Project Name
